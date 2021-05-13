@@ -36,7 +36,11 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
@@ -58,33 +62,71 @@ import java.io.IOException;
 
 class RedactImageFileListedInfoTypes {
 
-    public static void main(String[] args) throws IOException {
+
+    public static void main(String[] args) throws IOException, URISyntaxException {
         // TODO(developer): Replace these variables before running the sample.
         String projectId = "" ; // ToDo Replace with your Project ID;
         String inputPDF = ""; // Replace the Input PDF you want to mask
-        String inputPath = "resources/pdf/images"; // Replace the Path where you want to store the converted PDF
-        String outputPath = ""; // Repalce
+        String inputPath; // Replace the Path where you want to store the converted PDF
+        String outputPath = "/resources/output"; //Replace
+
+
+        for(int i = 0; i < args.length; i++) {
+            System.out.println(args[i]);
+            if(args[0].length() > 0)
+                projectId= args[0];
+            else
+                displayErrorArguments(" Project Id missing");
+            if(args[1].length() > 0) {
+                inputPDF = args[1];
+
+            }
+            else
+                displayErrorArguments(" Input PDF Path missing");
+
+
+
+        }
+
+        Path targetPath = Paths.get(System.getProperty("user.dir"));
+
+        inputPath = targetPath.toString() + "/output/pdf/images/";
+        System.out.print(inputPath);
+        outputPath = targetPath.toString() + "/output/images/";
+
+
+
         convertpdf2png(inputPDF);
         redactImageFileListedInfoTypes(projectId, inputPath, outputPath);
 
         // Replace with the right path
         combineImagesIntoPDF(outputPath + "redacted-delta.pdf",
-                outputPath + "/images"
+                outputPath
                 );
     }
 
-    static void convertpdf2png(String inputPath) throws IOException {
+    static void displayErrorArguments(String argument)
+    {
+        System.out.println("Argument missing " + argument + "  Proper usage java RedactImageFileListedInfoTypes <projectId> <inputPDFLocation>");
+    }
+
+    static void convertpdf2png(String inputPath) throws IOException, URISyntaxException {
 
 
+        Path  resource = Paths.get(System.getProperty("user.dir") + "/target/classes/"+ inputPath);
+        System.out.println(resource);
+        Path targetPath = Paths.get(System.getProperty("user.dir"));
 
+        String path = targetPath.toString() + "/output/pdf/images/";
+        System.out.print(path);
 
-        PDDocument document = PDDocument.load(new File(inputPath));
+        PDDocument document = PDDocument.load(new File(String.valueOf(resource)));
         PDFRenderer pdfRenderer = new PDFRenderer(document);
         for (int page = 0; page < document.getNumberOfPages(); ++page) {
             BufferedImage bim = pdfRenderer.renderImageWithDPI(
                     page, 100, ImageType.RGB);
             ImageIOUtil.writeImage(
-                    bim, inputPath + String.format("%s-%d.png", inputPath.substring(inputPath.lastIndexOf("/") + 1),page), 100);
+                    bim, path + String.format("%s-%d.png", resource.toString().substring(resource.toString().lastIndexOf("/") + 1),page), 100);
         }
         document.close();
 
